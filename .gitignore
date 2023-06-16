@@ -1,6 +1,6 @@
-logger/*
+logger/__pycache__/*
 mysite/__pycache__/*
 website/__pycache__/*
 .vscode/settings.json
 media/*
-logger/files/*
+# logger/files/*
