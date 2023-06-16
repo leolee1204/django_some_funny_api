@@ -467,7 +467,7 @@ class downloadNovelWordCloud(views.APIView):
         if name and (name != json.dumps(None)):
             novels = novels.filter(novel__name__contains=name)
         if novelId and (novelId != json.dumps(None)):
-            novels = novels.filter(novel_id=novelId)
+            novels = novels.filter(id=novelId)
 
         list_serializer = novelDetailSer(novels, many=True, context={"request": request}).data
         return Response(list_serializer)
@@ -538,8 +538,7 @@ class downloadNovelWordCloud(views.APIView):
     def delete(self,request):
         try:
             ids = request.data.get('ids')
-            novelDetail.objects.filter(novel_id__in=ids).delete()
-            novelList.objects.filter(id__in=ids).delete()
+            novelDetail.objects.filter(id__in=ids).delete()
             return Response({'message':'delete success'},status=200)
         except:
             logger.error(traceback.format_exc())
