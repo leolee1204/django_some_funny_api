@@ -461,86 +461,90 @@ class downloadNovelWordCloud(views.APIView):
     authentication_classes = []
     def get(self,request):
         name = request.GET.get('name', None)
-        novel = request.GET.get('novel', None)
+        novelId = request.GET.get('novelId', None)
         novels = novelDetail.objects.all()
 
         if name and (name != json.dumps(None)):
             novels = novels.filter(novel__name__contains=name)
-        if novel and (novel != json.dumps(None)):
-            novels = novels.filter(novel__id=novel)
+        if novelId and (novelId != json.dumps(None)):
+            novels = novels.filter(novel_id=novelId)
 
         list_serializer = novelDetailSer(novels, many=True, context={"request": request}).data
         return Response(list_serializer)
 
     def post(self,request):
         ua = UserAgent()
-
         url = request.data.get('url')
         user_agent = {"User-Agent":f"{ua.chrome}"}
         res = requests.get(url,headers=user_agent)
         
-        if res.status == 200:
-            logger.info('novel post start....')
-            soup = BeautifulSoup(res.text,'lxml')
-            name = soup.select_one(".name").text
+        logger.info('novel post start....')
+
+        soup = BeautifulSoup(res.text,'lxml')
+        name = soup.select_one(".name").text
+
+        defaults = dict()
+        defaults['name'] = name
+        obj,created = novelList.objects.update_or_create(
+            pk=request.data.get('id'),
+            defaults=defaults
+        )
+        #載入停用字
+        stopwords = set([stopword.strip() for stopword in \
+            open("stopword.txt", "r", encoding="utf-8").readlines()])
+
+        try:
+            chapter = str(url.split('/')[-1].split('.html')[0])
+            content = soup.select_one('#content').text
+
+            # 只取文字
+            content = "".join(re.findall(r'\w+',content))
+            # jieba切割
+            jieba_words = "|".join(jieba.cut(content))
+            # 文字雲套件
+            wc = WordCloud(width=400,height=400,background_color="white", stopwords=stopwords, font_path="kaiu.ttf").generate(jieba_words)
+
+            image = wc.to_image()
+            # Convert the image to a binary format
+            buffer = BytesIO()
+            image.save(buffer, format='PNG')
+
+            # binary
+            image_binary = buffer.getvalue()
+            input_image = Image.open(BytesIO(image_binary))
+            # pil to png
+            file = InMemoryUploadedFile(
+                file=buffer,
+                field_name=None,
+                name=f'{chapter}.png',
+                content_type='image/png',
+                size=input_image.size,
+                charset=None
+            )
             
-            # 建立model
             defaults = dict()
-            defaults['name'] = name
-            obj,created = novelList.objects.update_or_create(
-                pk=request.data.get('id'),
+            defaults['content'] = content
+            defaults['file_path'] = file
+            novelDetail.objects.update_or_create(
+                novel_id=obj.id,
+                chapter=chapter,
                 defaults=defaults
             )
-
-            #載入停用字
-            stopwords = set()
-            stopword_content = [stopword.strip() for stopword in open("stopword.txt", "r", encoding="utf-8").readlines()]
-            stopwords.update(stopword_content)
-
-            try:
-                chapter = str(url.split('/')[-1].split('.html')[0])
-                content = soup.select_one('#content').text
-
-                content = "".join(re.findall(r'\w+',content))
-                jieba_words = " ".join(jieba.cut(content))
-
-                #solve pip install --updadte pillow,pip install --updadte pip
-                # 文字雲套件
-                wc = WordCloud(width=400,height=400,background_color="white", stopwords=stopwords, font_path="kaiu.ttf").generate(jieba_words)
-                image = wc.to_image()
-
-                # Convert the image to a binary format
-                buffer = BytesIO()
-                image.save(buffer, format='PNG')
-
-                # binary
-                image_binary = buffer.getvalue()
-                input_image = Image.open(BytesIO(image_binary))
-                # pil to png
-                file = InMemoryUploadedFile(
-                    file=buffer,
-                    field_name=None,
-                    name=f'{chapter}.png',
-                    content_type='image/png',
-                    size=input_image.size,
-                    charset=None
-                )
-                
-                defaults = dict()
-                defaults['content'] = content
-                defaults['file_path'] = file
-                novelDetail.objects.update_or_create(
-                    novel_id=obj.id,
-                    chapter=chapter,
-                    defaults=defaults
-                )
-                logger.info('novel post finish....')
-            except Exception as e:
-                logger.error(traceback.format_exc())
-                return Response({"message":"error"},status=400)
-            return Response({"message":True},status=201)
-        logger.info('response is not working....')
-        return Response({"message":'response is not working'},status=400)
+            logger.info('novel post finish....')
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            return Response({"message":"error"},status=400)
+        return Response({"message":True},status=201)
+    def delete(self,request):
+        try:
+            ids = request.data.get('ids')
+            novelDetail.objects.filter(novel_id__in=ids).delete()
+            novelList.objects.filter(id__in=ids).delete()
+            return Response({'message':'delete success'},status=200)
+        except:
+            logger.error(traceback.format_exc())
+            return Response({'message':'delete false'},status=200)
+        
 
 class testAsyncTask(views.APIView):
     permission_classes = (permissions.AllowAny,)
