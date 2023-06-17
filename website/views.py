@@ -462,7 +462,7 @@ class downloadNovelWordCloud(views.APIView):
     def get(self,request):
         name = request.GET.get('name', None)
         novelId = request.GET.get('novelId', None)
-        novels = novelDetail.objects.all()
+        novels = novelDetail.objects.all().order_by('-created_at')
 
         if name and (name != json.dumps(None)):
             novels = novels.filter(novel__name__contains=name)
@@ -473,68 +473,83 @@ class downloadNovelWordCloud(views.APIView):
         return Response(list_serializer)
 
     def post(self,request):
-        ua = UserAgent()
+        def wordCouldPhoto(url):
+            try:
+                ua = UserAgent()
+                user_agent = {"User-Agent":f"{ua.chrome}"}
+
+                logger.info('novel post start....')
+                res = requests.get(url,headers=user_agent)
+
+                soup = BeautifulSoup(res.text,'lxml')
+                name = soup.select_one(".name").text
+
+                #載入停用字
+                stopwords = set([stopword.strip() for stopword in \
+                    open("stopword.txt", "r", encoding="utf-8").readlines()])
+
+                chapter = str(url.split('/')[-1].split('.html')[0])
+                content = soup.select_one('#content').text
+                # 只取文字
+                content = "".join(re.findall(r'\w+',content))
+                # jieba切割
+                jieba_words = "|".join(jieba.cut(content))
+                # 文字雲套件
+                wc = WordCloud(width=400,height=400,background_color="white", stopwords=stopwords,\
+                     font_path="kaiu.ttf").generate(jieba_words)
+                
+                result = dict()
+                result['name'] = name
+                result['wc'] = wc
+                result['chapter'] = chapter
+                result['content'] = content
+                return result
+            except:
+                logger.error(traceback.format_exc())
+                return None
+
         url = request.data.get('url')
-        user_agent = {"User-Agent":f"{ua.chrome}"}
-        res = requests.get(url,headers=user_agent)
-        
-        logger.info('novel post start....')
+        result = wordCouldPhoto(url)
+        if result:
+            try:
+                defaults = dict()
+                defaults['name'] = result['name']
+                obj,created = novelList.objects.update_or_create(
+                    pk=request.data.get('id'),
+                    defaults=defaults
+                )
+                image = result['wc'].to_image()
+                # Convert the image to a binary format
+                buffer = BytesIO()
+                image.save(buffer, format='PNG')
 
-        soup = BeautifulSoup(res.text,'lxml')
-        name = soup.select_one(".name").text
+                # binary
+                image_binary = buffer.getvalue()
+                input_image = Image.open(BytesIO(image_binary))
+                # pil to png
+                file = InMemoryUploadedFile(
+                    file=buffer,
+                    field_name=None,
+                    name=f'{result["chapter"]}.png',
+                    content_type='image/png',
+                    size=input_image.size,
+                    charset=None
+                )
+                
+                defaults = dict()
+                defaults['content'] = result['content']
+                defaults['file_path'] = file
+                novelDetail.objects.update_or_create(
+                    novel_id=obj.id,
+                    chapter=result["chapter"],
+                    defaults=defaults
+                )
+                logger.info('novel post finish....')
+                return Response({"message":"create success"},status=201)
+            except:
+                logger.error(traceback.format_exc())
+        return Response({"message":"error"},status=400)
 
-        defaults = dict()
-        defaults['name'] = name
-        obj,created = novelList.objects.update_or_create(
-            pk=request.data.get('id'),
-            defaults=defaults
-        )
-        #載入停用字
-        stopwords = set([stopword.strip() for stopword in \
-            open("stopword.txt", "r", encoding="utf-8").readlines()])
-
-        try:
-            chapter = str(url.split('/')[-1].split('.html')[0])
-            content = soup.select_one('#content').text
-
-            # 只取文字
-            content = "".join(re.findall(r'\w+',content))
-            # jieba切割
-            jieba_words = "|".join(jieba.cut(content))
-            # 文字雲套件
-            wc = WordCloud(width=400,height=400,background_color="white", stopwords=stopwords, font_path="kaiu.ttf").generate(jieba_words)
-
-            image = wc.to_image()
-            # Convert the image to a binary format
-            buffer = BytesIO()
-            image.save(buffer, format='PNG')
-
-            # binary
-            image_binary = buffer.getvalue()
-            input_image = Image.open(BytesIO(image_binary))
-            # pil to png
-            file = InMemoryUploadedFile(
-                file=buffer,
-                field_name=None,
-                name=f'{chapter}.png',
-                content_type='image/png',
-                size=input_image.size,
-                charset=None
-            )
-            
-            defaults = dict()
-            defaults['content'] = content
-            defaults['file_path'] = file
-            novelDetail.objects.update_or_create(
-                novel_id=obj.id,
-                chapter=chapter,
-                defaults=defaults
-            )
-            logger.info('novel post finish....')
-        except Exception as e:
-            logger.error(traceback.format_exc())
-            return Response({"message":"error"},status=400)
-        return Response({"message":True},status=201)
     def delete(self,request):
         try:
             ids = request.data.get('ids')
