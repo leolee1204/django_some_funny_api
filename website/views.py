@@ -399,7 +399,7 @@ class youBike(views.APIView):
         def get_folium_html(df):
             latitude,longitude = df['lat'].mean(),df['lng'].mean()
             #初始化地圖要指定地圖中心的經緯度坐標，跟比例尺(zomm_start)
-            san_map = folium.Map(location = [latitude, longitude], zoom_start = 12)
+            san_map = folium.Map(location = [latitude, longitude], zoom_start = 13)
             '''
              1. 創建plugins.MarkerCluster()的實例並將其添加到您的 Folium 映射中。
              2. 不是直接將單個標記添加到地圖，而是將它們添加到標記簇對象。
