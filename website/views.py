@@ -33,6 +33,10 @@ import matplotlib.pyplot as plt
 import cv2
 from logger import LogManager
 import traceback
+import folium
+from folium import plugins
+import uuid
+from django.http import HttpResponse
 
 logger = LogManager().getLogger('view')
 
@@ -392,6 +396,39 @@ class youBike(views.APIView):
     permission_classes = (permissions.AllowAny,)
     authentication_classes = []
     def get(self,request):
+        def get_folium_html(df):
+            latitude,longitude = df['lat'].mean(),df['lng'].mean()
+            #初始化地圖要指定地圖中心的經緯度坐標，跟比例尺(zomm_start)
+            san_map = folium.Map(location = [latitude, longitude], zoom_start = 12)
+            '''
+             1. 創建plugins.MarkerCluster()的實例並將其添加到您的 Folium 映射中。
+             2. 不是直接將單個標記添加到地圖，而是將它們添加到標記簇對象。
+             3. 標記簇對象會根據地圖的縮放級別自動將彼此靠近的標記分組到簇中。當您放大時，集群將分裂成單獨的標記。
+             4. 聚類圖標代表每個聚類中標記的數量。例如，如果一個簇包含多個標記，則簇圖標將顯示該簇中標記的數量。
+             使用plugins.MarkerCluster()的好處包括： 
+             1. 提高性能：聚類標記減少了地圖上的 DOM 元素數量，在處理大量標記時可以顯著提高地圖的渲染性能。
+             2. 簡化的可視化：集群允許您以緊湊的形式可視化大量標記。您可以看到代表標記組的集群，而不是用大量標記使地圖混亂。
+             3. 交互式探索：用戶可以通過放大或點擊它們來與集群交互以顯示底層標記。這提供了一種更具交互性和直觀性的方式來瀏覽地圖上的標記數據。
+            '''
+            incidents = plugins.MarkerCluster().add_to(san_map)
+
+            # loop through the dataframe and add each data point to the mark cluster
+            for lat, lng, name, sbi, bemp in zip(df.lat, df.lng, df.sna, df.sbi, df.bemp):
+                label = dict()
+                label['name'] = name.split('_')[1] if '_' in name else name
+                label['可借車位數'] = sbi
+                label['可還空位數'] = bemp
+                # 標記
+                folium.Marker(
+                    location=[lat, lng],
+                    icon=None,
+                    popup=label,
+                ).add_to(incidents)
+
+            #將incidents標記集群對像作為子項添加到san_map 地圖對象
+            san_map.add_child(incidents)
+            map_html = san_map.get_root().render()
+            return map_html
         try:
             '''
             sno(站點代號)、sna(中文場站名稱)、tot(場站總停車格)、sbi(可借車位數)、
@@ -409,12 +446,13 @@ class youBike(views.APIView):
                 df = df[(df.sna.str.contains(key_word))|(df.ar.str.contains(key_word))|(df.sarea.str.contains(key_word))]
 
             df.sort_values(by=['sbi','bemp'],ascending=[False,False],axis=0,inplace=True)
-
-            df.rename(columns={
-                'sna':'站點','updateTime':'更新時間','tot':'場站總停車格','sbi':'可借車位數','bemp':'可還空位數',
-                'lat':"緯度",'lng':'經度','sarea':'場站區域','ar':'地址'},inplace=True)
+            map_html = get_folium_html(df)
+            # df.rename(columns={
+            #     'sna':'站點','updateTime':'更新時間','tot':'場站總停車格','sbi':'可借車位數','bemp':'可還空位數',
+            #     'lat':"緯度",'lng':'經度','sarea':'場站區域','ar':'地址'},inplace=True)
             logger.info('youbike get method finish...')
-            return Response(df.T.to_dict().values(),status=200)
+            return HttpResponse(map_html)
+            # return Response(df.T.to_dict().values(),status=200)
         except Exception as e:
             logger.error(traceback.format_exc())
             return Response({'message':'error'},status=400)
