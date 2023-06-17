@@ -413,11 +413,12 @@ class youBike(views.APIView):
             incidents = plugins.MarkerCluster().add_to(san_map)
 
             # loop through the dataframe and add each data point to the mark cluster
-            for lat, lng, name, sbi, bemp in zip(df.lat, df.lng, df.sna, df.sbi, df.bemp):
+            for lat, lng, name, sbi, bemp, updatetime in zip(df.lat, df.lng, df.sna, df.sbi, df.bemp ,df.updateTime):
                 label = dict()
                 label['name'] = name.split('_')[1] if '_' in name else name
                 label['可借車位數'] = sbi
                 label['可還空位數'] = bemp
+                label['更新時間'] = updatetime
                 # 標記
                 folium.Marker(
                     location=[lat, lng],
