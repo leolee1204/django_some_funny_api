@@ -43,7 +43,8 @@
 * keyWord -> 模糊比對(str)
 * filter 站點 | 場站區域 | 地址
 * sort_by("可借車位數","可還空位數")
-* 生成地理區域圖表，可以伸縮html圖形，可以count附近站點，並點擊所選取的站點，可以觀看站點名稱,可租借車位,可還車車位
+* 生成地理區域圖表，可以伸縮html圖形，可以count附近站點
+* 點擊所選取的站點，可以觀看站點名稱,可租借車位,可還車車位,更新時間
 * 資料即時爬取opendata youbike2.0
 * 輸入 https://projecct001.onrender.com/api/youbike
 * 後面可帶 ?keyWord=xxx 模糊比對 或 不帶參數也可以
