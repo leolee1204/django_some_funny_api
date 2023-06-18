@@ -15,7 +15,7 @@
 * start , end in params
 * 也可以不帶params 直接get相關資料
 * 
-![](https://github.com/leolee1204/project001/blob/f94213fa482b9acae949a51322317961383a9a06/images/youbike_get.png)
+![](https://github.com/leolee1204/project001/blob/cdfe41e0238bd982ba6be80567a021cb0324f1ee/images/youtube_get.png)
 
 ### api/novel/download post
 
@@ -44,8 +44,9 @@
 * filter 站點 | 場站區域 | 地址
 * sort_by("可借車位數","可還空位數")
 * 生成地理區域圖表，可以伸縮html圖形，可以count附近站點
+* 可租借車位 or 可還車車位 < 5 就會呈現紅色，否則綠色
 * 點擊所選取的站點，可以觀看站點名稱,可租借車位,可還車車位,更新時間
 * 資料即時爬取opendata youbike2.0
 * 輸入 https://projecct001.onrender.com/api/youbike
 * 後面可帶 ?keyWord=xxx 模糊比對 或 不帶參數也可以
-![](https://github.com/leolee1204/project001/blob/f94213fa482b9acae949a51322317961383a9a06/images/youtube_get.png)
+![](https://github.com/leolee1204/project001/blob/cdfe41e0238bd982ba6be80567a021cb0324f1ee/images/youbike_get.png)
