@@ -419,10 +419,11 @@ class youBike(views.APIView):
                 label['可借車位數'] = row['sbi']
                 label['可還空位數'] = row['bemp']
                 label['更新時間'] = row['updateTime']
+                color = 'red' if (row['sbi'] < 5) or (row['bemp'] < 5) else 'green'
                 # 標記
                 folium.Marker(
                     location=[row['lat'], row['lng']],
-                    icon=None,
+                    icon=folium.Icon(color=color,prefix='fa', icon="bicycle"),
                     popup=label,
                 ).add_to(incidents)
 
