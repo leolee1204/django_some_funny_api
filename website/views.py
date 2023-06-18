@@ -424,7 +424,7 @@ class youBike(views.APIView):
                 folium.Marker(
                     location=[row['lat'], row['lng']],
                     icon=folium.Icon(color=color,prefix='fa', icon="bicycle"),
-                    popup=label,
+                    popup=label
                 ).add_to(incidents)
 
             #將incidents標記集群對像作為子項添加到san_map 地圖對象
