@@ -523,17 +523,16 @@ class downloadNovelWordCloud(views.APIView):
 
                 soup = BeautifulSoup(res.text,'lxml')
                 name = soup.select_one(".name").text
-
-                #載入停用字
-                stopwords = set([stopword.strip() for stopword in \
-                    open("stopword.txt", "r", encoding="utf-8").readlines()])
-
                 chapter = str(url.split('/')[-1].split('.html')[0])
                 content = soup.select_one('#content').text
+
                 # 只取文字
                 content = "".join(re.findall(r'\w+',content))
                 # jieba切割
                 jieba_words = "|".join(jieba.cut(content))
+                #載入停用字
+                stopwords = set([stopword.strip() for stopword in \
+                    open("stopword.txt", "r", encoding="utf-8").readlines()])
                 # 文字雲套件
                 wc = WordCloud(width=400,height=400,background_color="white", stopwords=stopwords,\
                      font_path="kaiu.ttf").generate(jieba_words)
