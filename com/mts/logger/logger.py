@@ -1,31 +1,31 @@
+# from __future__ import annotations
+
 from loguru import logger
 import os,sys
 from typing import Union
 
 class LogManager:
+
     __instance__ = None
     show_console: bool = True
-    root_dir: str 
+    root_dir: str
     loggers: list = []
     ext: str = 'log'
     default_level: str = 'INFO'
     filename: str = '%s_{time:YYYY-MM-DD}.%s'
 
-    def __new__(cls,root_dir: str='./logger/files',show_console: bool=True, ext: str='log', default_level='INFO'):
-        # 判断該類的屬性是否為空；對第一個對像没有被創建，我们應該調用父類的方法，為第一個對象分配空間
+    def __new__(cls,root_dir: str='.',show_console: bool=True, ext: str='log', default_level='INFO'):
         if not LogManager.__instance__:
-            # 把類屬性中保存的對象引用返回给python的解釋器
             LogManager.__instance__ = object.__new__(cls)
             checkDir = os.path.isdir(root_dir)
             if not checkDir:
                 raise ValueError("Directory does not exist.(%s)" % root_dir)
             LogManager.root_dir = root_dir
             show_console = str(show_console)
-            # if show_console is not None and show_console.lower() in ['yes', 'true', 't', '1']:
-            #     LogManager.show_console = True
-            # else:
-            #     LogManager.show_console = False
-            LogManager.show_console = True if show_console else False
+            if show_console is not None and show_console.lower() in ['yes', 'true', 't', '1']:
+                LogManager.show_console = True
+            else:
+                LogManager.show_console = False
             LogManager.ext = ext
             LogManager.default_level = default_level
             # 刪除預設handle
@@ -37,7 +37,7 @@ class LogManager:
             return record["extra"].get("name") == name
 
         return filter
-    # extra[name] :getLogger('view') module:files line:405 level:INFO message:xxxx start
+
     def getLogger(self, name: str,
                         format: str='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> {extra[name]}[<light-blue>{module}</light-blue>:{line}] <lvl>{level}</lvl> {message}',
                         level: Union[str, None]=None,
@@ -74,4 +74,5 @@ class LogManager:
                         level=level,
                         filter=self.make_filter(name),
                     )
+
         return logger.bind(name=name)

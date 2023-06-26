@@ -31,7 +31,7 @@ from django.core.cache import cache
 from PIL import Image
 import matplotlib.pyplot as plt
 import cv2
-from logger import LogManager
+from com.mts.logger import LogManager
 import traceback
 import folium
 from folium import plugins
