@@ -2,7 +2,6 @@ from rest_framework import serializers
 from website.models import (
     youtubeDownload,
     novelDetail,
-    transferStyleModel
 )
 
 class youtubeDownloadSer(serializers.ModelSerializer):
@@ -16,8 +15,3 @@ class novelDetailSer(serializers.ModelSerializer):
         model = novelDetail
         exclude =('created_at',)
         extra_fields = ["name",]
-
-class transferStyleSer(serializers.ModelSerializer):
-    class Meta:
-        model = transferStyleModel
-        exclude =('created_at',)

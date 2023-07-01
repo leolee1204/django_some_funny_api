@@ -23,9 +23,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-$+mh54kme%q*p*j9_(8ykjsk7fgkp99bv!$3t^wyz1agh)t!@u'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    "*",
+]
 
 
 # Application definition
@@ -37,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'website',
     'rest_framework',
     'rest_framework.authtoken',
     'widget_tweaks',
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     "django_celery_results",
     "django_celery_beat",
+    "website"
 ]
 
 SITE_ID = 1
@@ -85,19 +87,27 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-'''
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-'''
-import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.parse('postgres://project002_user:GTn9KjnbkpRoqPvn6IwuJ7DrswHkw2GX@dpg-chg9o2ik728sd6io7vh0-a.singapore-postgres.render.com/project002')
+     "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "HOST": "127.0.0.1",
+        "PORT": "3306",
+        "NAME": "project001",
+        "USER": "root",
+        "PASSWORD": "motenso@90363170",
+        "OPTIONS": {
+            "init_command": "SET foreign_key_checks = 0;",
+        },
+    }
 }
+
+import dj_database_url
+
+# DATABASES = {
+#     'default': dj_database_url.parse(
+#         'postgres://project002_user:GTn9KjnbkpRoqPvn6IwuJ7DrswHkw2GX@dpg-chg9o2ik728sd6io7vh0-a.singapore-postgres.render.com/project002'),
+# }
 
 
 # Password validation
@@ -134,12 +144,6 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = False
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = 'static/'
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -167,6 +171,19 @@ CACHES = {
         },
     },
 }
+
+REST_FRAMEWORK = {
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"]
+}
+
+REST_FRAMEWORK = {
+    #     'DEFAULT_AUTHENTICATION_CLASSES': [
+    #         'rest_framework.authentication.TokenAuthentication',
+    #         'rest_framework.authentication.SessionAuthentication',
+    #     ],
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+}
+
 # Celery settings
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 # CELERY_TIMEZONE = "Europe/London"

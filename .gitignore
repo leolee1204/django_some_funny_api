@@ -4,3 +4,7 @@ website/__pycache__/*
 .vscode/settings.json
 media/*
 logger/files/*
+com/*
+log_files/*
+website/migrations/*
+website/models/__pycache__/*
