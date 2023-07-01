@@ -408,7 +408,7 @@ class youBike(views.APIView):
             map_html = san_map.get_root().render()
             return map_html
         try:
-            key = datetime.datetime.now().date()
+            key = "youbike"
             if not cache.has_key(key):
                 '''
                 sno(站點代號)、sna(中文場站名稱)、tot(場站總停車格)、sbi(可借車位數)、
@@ -416,15 +416,17 @@ class youBike(views.APIView):
                 ar(中文地址)、sareaen(英文場站區域)、snaen(英文場站名稱)、aren(英文地址)、
                 bemp(可還空位數)、act(場站是否暫停營運)
                 '''
-                logger.info('youbike get method strat...')
+                logger.info('redis not has key start...')
                 url = "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json"
                 res = requests.get(url).json()
                 df = pd.DataFrame(res)[['sna','updateTime','tot','sbi','bemp','lat','lng','sarea','ar']]
                 cache.set(key,df,60*5)
+                logger.info('redis not has key finish...')
             else:
                 df = cache.get(key)
 
             #模糊比對
+            logger.info('youbike get method strat...')
             key_word = request.GET.get('keyWord', None)
             if key_word:
                 df = df[(df.sna.str.contains(key_word))|(df.ar.str.contains(key_word))|(df.sarea.str.contains(key_word))]
