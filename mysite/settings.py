@@ -149,10 +149,20 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 MEDIA_URL = "/media/"
 
 # test for cache using redis
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://127.0.0.1:6379",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         },
+#     },
+# }
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379",
+        "LOCATION": "rediss://red-cifrd2d9aq012eribt1g:983HFwNjgrmSc48AeUrqwZDt78Rl7ru7@singapore-redis.render.com:6379",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
@@ -172,7 +182,8 @@ REST_FRAMEWORK = {
 }
 
 # Celery settings
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+# CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_BROKER_URL = "rediss://red-cifrd2d9aq012eribt1g:983HFwNjgrmSc48AeUrqwZDt78Rl7ru7@singapore-redis.render.com:6379"
 # CELERY_TIMEZONE = "Europe/London"
 CELERY_TIMEZONE = "Asia/Taipei"
 CELERY_ENABLE_UTC = True
@@ -197,13 +208,8 @@ from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     "add": {
-        "task": "website.tasks.test_task",
-        "schedule": crontab(minute=17, hour=15),
-        # "schedule": 60 * 1,
-    },
-    "add": {
         "task": "website.tasks.get_youbike",
-        "schedule": crontab(minute='*/1'),
+        "schedule": crontab(minute='*/5'),
         # "schedule": 60 * 1,
     },
 }

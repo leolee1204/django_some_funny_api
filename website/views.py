@@ -42,32 +42,6 @@ from django.http import HttpResponse
 
 logger = LogManager().getLogger('view')
 
-class test(views.APIView):
-    permission_classes = (permissions.AllowAny,)
-    authentication_classes = []
-    def post(self,request):
-        image = cv2.imread('origan.jpg')
-
-        image = Image.fromarray(image)
-         # Convert the image to a binary format
-        buffer = BytesIO()
-        image.save(buffer, format='PNG')
-
-        # binary
-        image_binary = buffer.getvalue()
-        input_image = Image.open(BytesIO(image_binary))
-        # pil to png
-        file = InMemoryUploadedFile(
-            file=buffer,
-            field_name=None,
-            name=f'result.png',
-            content_type='image/png',
-            size=input_image.size,
-            charset=None
-        )
-        print(file,type(file))
-        
-
 # class transferStyle(views.APIView):
 #     permission_classes = (permissions.AllowAny,)
 #     authentication_classes = []
@@ -434,22 +408,28 @@ class youBike(views.APIView):
             map_html = san_map.get_root().render()
             return map_html
         try:
-            '''
-            sno(站點代號)、sna(中文場站名稱)、tot(場站總停車格)、sbi(可借車位數)、
-            sarea(中文場站區域)、mday(資料更新時間)、lat(緯度)、lng(經度)、
-            ar(中文地址)、sareaen(英文場站區域)、snaen(英文場站名稱)、aren(英文地址)、
-            bemp(可還空位數)、act(場站是否暫停營運)
-            '''
-            logger.info('youbike get method strat...')
-            url = "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json"
-            res = requests.get(url).json()
-            df = pd.DataFrame(res)[['sna','updateTime','tot','sbi','bemp','lat','lng','sarea','ar']]
+            key = datetime.datetime.now().date()
+            if not cache.has_key(key):
+                '''
+                sno(站點代號)、sna(中文場站名稱)、tot(場站總停車格)、sbi(可借車位數)、
+                sarea(中文場站區域)、mday(資料更新時間)、lat(緯度)、lng(經度)、
+                ar(中文地址)、sareaen(英文場站區域)、snaen(英文場站名稱)、aren(英文地址)、
+                bemp(可還空位數)、act(場站是否暫停營運)
+                '''
+                logger.info('youbike get method strat...')
+                url = "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json"
+                res = requests.get(url).json()
+                df = pd.DataFrame(res)[['sna','updateTime','tot','sbi','bemp','lat','lng','sarea','ar']]
+                cache.set(key,df,60*5)
+            else:
+                df = cache.get(key)
+
             #模糊比對
             key_word = request.GET.get('keyWord', None)
             if key_word:
                 df = df[(df.sna.str.contains(key_word))|(df.ar.str.contains(key_word))|(df.sarea.str.contains(key_word))]
-
             df.sort_values(by=['sbi','bemp'],ascending=[False,False],axis=0,inplace=True)
+
             map_html = get_folium_html(df)
             # df.rename(columns={
             #     'sna':'站點','updateTime':'更新時間','tot':'場站總停車格','sbi':'可借車位數','bemp':'可還空位數',
