@@ -88,26 +88,13 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
-        "NAME": "project001",
-        "USER": "root",
-        "PASSWORD": "motenso@90363170",
-        "OPTIONS": {
-            "init_command": "SET foreign_key_checks = 0;",
-        },
-    }
-}
 
 import dj_database_url
 
-# DATABASES = {
-#     'default': dj_database_url.parse(
-#         'postgres://project002_user:GTn9KjnbkpRoqPvn6IwuJ7DrswHkw2GX@dpg-chg9o2ik728sd6io7vh0-a.singapore-postgres.render.com/project002'),
-# }
+DATABASES = {
+    'default': dj_database_url.parse(
+        'postgres://leo:Otn6OXhLLcZEs0UYzk3edBlPyjNcahei@dpg-cifqk0lgkuvojjdmob8g-a.oregon-postgres.render.com/project001'),
+}
 
 
 # Password validation
