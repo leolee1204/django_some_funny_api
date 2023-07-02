@@ -39,8 +39,82 @@ import folium
 from folium import plugins
 import uuid
 from django.http import HttpResponse
+import time
+from yahoo_historical import Fetcher
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
 
 logger = LogManager().getLogger('view')
+
+class Stock(views.APIView):
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = []
+    def get(self,request):
+        def stock_html(name,start_date,end_date):
+            try:
+                timestamp_start = time.mktime(start_date.timetuple())
+                timestamp_end = time.mktime(end_date.timetuple())
+
+                data = Fetcher(name,timestamp_start,timestamp_end)
+
+                data = data.get_historical()
+                data.Date = pd.to_datetime(data.Date)
+                data = data.set_index('Date')
+
+                # Create subplots and mention plot grid size
+                fig = make_subplots(rows=2, cols=1, shared_xaxes=True, 
+                            vertical_spacing=0.03, subplot_titles=(
+                                '%s: %s To %s'%(name,str(start_date.date()),str(end_date.date())), 'Volume'), 
+                            row_width=[0.2, 0.7])
+
+                # Plot OHLC on 1st row
+                fig.add_trace(go.Candlestick(
+                    x=data.index, 
+                    open=data["Open"], 
+                    high=data["High"],
+                    low=data["Low"], 
+                    close=data["Close"], 
+                    name=name), 
+                    row=1, col=1
+                )
+
+                # Bar trace for volumes on 2nd row without legend
+                fig.add_trace(
+                    go.Bar(
+                        x=data.index, 
+                        y=data['Volume'], 
+                        showlegend=False), 
+                        row=2, col=1
+                        )
+
+                # Do not show OHLC's rangeslider plot 
+                fig.update(layout_xaxis_rangeslider_visible=False)
+                # Generate HTML content for the plot
+                plot_html = fig.to_html(full_html=False)
+
+                # Create and configure HttpResponse
+                response = HttpResponse(plot_html)
+                response['Content-Type'] = 'text/html'
+                
+                # Return the HttpResponse object
+                return response
+            except:
+                return None
+
+        name = request.GET.get('name', None)
+        start_date = request.GET.get('startDate', None)
+        end_date = request.GET.get('endDate', None)
+        now = datetime.datetime.today().date()
+        
+        # 預設抓 去年1/1 - 今天
+        now = datetime.datetime.today()
+        start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d") if start_date\
+             else now.replace(year=int(now.year)-1,month=1,day=1)
+        end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d") if end_date else now
+
+        response = stock_html(name,start_date,end_date)
+        return HttpResponse(response) if response else Response({
+            "success": False, "message": "error"}, status=status.HTTP_400_BAD_REQUEST)
 
 # class transferStyle(views.APIView):
 #     permission_classes = (permissions.AllowAny,)
@@ -617,3 +691,4 @@ class redisTaskTest(views.APIView):
             return Response(youbike_data.values(),status=200)
         else:
             return Response('error',status=400)
+

@@ -21,6 +21,7 @@ from website.views import (
     downloadYoutube,
     downloadNovelWordCloud,
     youBike,
+    Stock
     )
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import admin
@@ -30,4 +31,5 @@ urlpatterns = [
     path('api/youtube/download',csrf_exempt(downloadYoutube.as_view()),name='api-youtube'),
     path('api/novel/download',csrf_exempt(downloadNovelWordCloud.as_view()),name='api-novel'),
     path('api/youbike',csrf_exempt(youBike.as_view()),name='api-youbike'),
+    path('api/stock',csrf_exempt(Stock.as_view()),name='api-stock'),
 ] +static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
