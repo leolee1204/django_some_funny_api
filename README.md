@@ -50,3 +50,10 @@
 * 輸入 https://projecct001.onrender.com/api/youbike
 * 後面可帶 ?keyWord=xxx 模糊比對 或 不帶參數也可以
 ![](https://github.com/leolee1204/project001/blob/cdfe41e0238bd982ba6be80567a021cb0324f1ee/images/youbike_get.png)
+
+### api/stock get
+* name 找尋美股股票名稱 example AAPL or 2330.TW(台灣)
+* startDate 起始時間 預設 前一年1月1日
+* endDate 終止時間 預設 今天
+* 生成plotly頁面 上面為蠟燭圖 下面為交易量
+![](https://github.com/leolee1204/project001/blob/9d1fb990fe2a47c7ef8b013f32c25ab7d8617a23/images/stock_get.png)
