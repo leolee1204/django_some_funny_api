@@ -95,8 +95,19 @@ DATABASES = {
     'default': dj_database_url.parse(
         'postgres://leo:Otn6OXhLLcZEs0UYzk3edBlPyjNcahei@dpg-cifqk0lgkuvojjdmob8g-a.oregon-postgres.render.com/project001'),
 }
-
-
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "HOST": "127.0.0.1",
+#         "PORT": "3306",
+#         "NAME": "project001",
+#         "USER": "root",
+#         "PASSWORD": "motenso@90363170",
+#         "OPTIONS": {
+#             "init_command": "SET foreign_key_checks = 0;",
+#         },
+#     }
+# }
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 

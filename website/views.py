@@ -43,6 +43,7 @@ import time
 from yahoo_historical import Fetcher
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
+import concurrent.futures
 
 logger = LogManager().getLogger('view')
 
@@ -560,7 +561,7 @@ class downloadNovelWordCloud(views.APIView):
     def get(self,request):
         name = request.GET.get('name', None)
         novelId = request.GET.get('novelId', None)
-        novels = novelDetail.objects.all().order_by('-created_at')
+        novels = novelDetail.objects.all().order_by('-novel_id','-chapter')
 
         if name and (name != json.dumps(None)):
             novels = novels.filter(novel__name__contains=name)
@@ -571,12 +572,31 @@ class downloadNovelWordCloud(views.APIView):
         return Response(list_serializer)
 
     def post(self,request):
+        def getUrlList(url):
+            try:
+                logger.info('novel post getUrl start....')
+                res = requests.get(url,headers=user_agent)
+
+                soup = BeautifulSoup(res.text,'lxml')
+                urls = soup.select('.list3 > li > a')
+                # 抓取最後一頁的url path
+                last_url_path = urls[-1]['href']
+                # 抓取最後一頁的page
+                last_url_page = re.findall('/(\d+).html',last_url_path)[0]
+
+                urls_dict = dict()
+                urls_dict['path'] = last_url_path
+                urls_dict['page'] = last_url_page
+                logger.info('novel post getUrl finish....')
+                return urls_dict
+            except:
+                #return str
+                logger.error(traceback.format_exc())
+                raise ValueError('url path not correct')
+
         def wordCouldPhoto(url):
             try:
-                ua = UserAgent()
-                user_agent = {"User-Agent":f"{ua.chrome}"}
-
-                logger.info('novel post start....')
+                logger.info('novel post wordCould start....')
                 res = requests.get(url,headers=user_agent)
 
                 soup = BeautifulSoup(res.text,'lxml')
@@ -600,20 +620,19 @@ class downloadNovelWordCloud(views.APIView):
                 result['wc'] = wc
                 result['chapter'] = chapter
                 result['content'] = content
+                logger.info('novel post wordCould finish....')
                 return result
             except:
                 logger.error(traceback.format_exc())
-                return None
+                raise
 
-        url = request.data.get('url')
-        result = wordCouldPhoto(url)
-        if result:
+        def update_or_create_model(result):
             try:
+                logger.info('novel post update_or_create model start....')
                 defaults = dict()
                 defaults['name'] = result['name']
                 obj,created = novelList.objects.update_or_create(
-                    pk=request.data.get('id'),
-                    defaults=defaults
+                    name=result['name'],
                 )
                 image = result['wc'].to_image()
                 # Convert the image to a binary format
@@ -641,11 +660,41 @@ class downloadNovelWordCloud(views.APIView):
                     chapter=result["chapter"],
                     defaults=defaults
                 )
-                logger.info('novel post finish....')
-                return Response({"message":"create success"},status=201)
+                logger.info('novel post update_or_create model finish....')
             except:
                 logger.error(traceback.format_exc())
-        return Response({"message":"error"},status=400)
+                raise
+        def main(url):
+            try:
+                result = wordCouldPhoto(url)
+                update_or_create_model(result)
+            except:
+                pass
+
+        ua = UserAgent()
+        user_agent = {"User-Agent":f"{ua.chrome}"}
+        url = request.data.get('url')
+        limit_page = request.data.get('limitPage')
+        try:
+            urls_dict = getUrlList(url)
+        except Exception as e:
+            return Response(str(e),status=400)
+        # 開啟多線程
+        threadExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+
+        last_page = int(urls_dict['page'])+1
+        with threadExecutor as executor:
+            for i in range(1,last_page):
+                try:
+                    if i > int(limit_page):
+                        break
+                    #將最後一頁取代成 i.html
+                    url = f"https://big5.quanben.io{urls_dict['path']}"\
+                        .replace(urls_dict['page'],str(i))
+                    executor.submit(main,url)
+                except:
+                    logger.error(traceback.format_exc())
+        return Response({"message":"create success"},status=201)
 
     def delete(self,request):
         try:
