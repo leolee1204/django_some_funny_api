@@ -3,7 +3,7 @@ com/mts/__pycache__/*
 com/mts/config/__pycache__/*
 com/mts/logger/__pycache__/*
 com/mts/logger/django/__pycache__/*
-log_files/*
+# log_files/*
 media/*
 mysite/__pycache__/*
 static/*
