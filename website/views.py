@@ -673,8 +673,10 @@ class downloadNovelWordCloud(views.APIView):
 
         ua = UserAgent()
         user_agent = {"User-Agent":f"{ua.chrome}"}
+        # https://big5.quanben.io/n/wudongqiankun/list.html
         url = request.data.get('url')
-        limit_page = request.data.get('limitPage')
+        limit_page = request.data.get('limitPage') if request.data.get('limitPage') else 1
+
         try:
             urls_dict = getUrlList(url)
         except Exception as e:
