@@ -679,8 +679,8 @@ class downloadNovelWordCloud(views.APIView):
             urls_dict = getUrlList(url)
         except Exception as e:
             return Response(str(e),status=400)
-        # 開啟多線程
-        threadExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+        # 開啟多線程 cpu太小改採1
+        threadExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
         last_page = int(urls_dict['page'])+1
         with threadExecutor as executor:
