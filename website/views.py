@@ -664,12 +664,12 @@ class downloadNovelWordCloud(views.APIView):
             except:
                 logger.error(traceback.format_exc())
                 raise
-        def main(url):
-            try:
-                result = wordCouldPhoto(url)
-                update_or_create_model(result)
-            except:
-                pass
+        # def main(url):
+        #     try:
+        #         result = wordCouldPhoto(url)
+        #         update_or_create_model(result)
+        #     except:
+        #         pass
 
         ua = UserAgent()
         user_agent = {"User-Agent":f"{ua.chrome}"}
@@ -677,26 +677,38 @@ class downloadNovelWordCloud(views.APIView):
         url = request.data.get('url')
         limit_page = request.data.get('limitPage') if request.data.get('limitPage') else 1
 
+        # style1 cpu太小改採此方式
         try:
             urls_dict = getUrlList(url)
+            last_page = int(urls_dict['page'])+1
+            for i in range(1,last_page):
+                if i > limit_page:
+                    return Response({"message":"create success"},status=201)
+                
+                url = f"https://big5.quanben.io{urls_dict['path']}".replace(
+                    urls_dict['page'],str(i))
+                result = wordCouldPhoto(url)
+                update_or_create_model(result)
+
         except Exception as e:
             return Response(str(e),status=400)
-        # 開啟多線程 cpu太小改採1
-        threadExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        
+        # 開啟多線程
+        # threadExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
-        last_page = int(urls_dict['page'])+1
-        with threadExecutor as executor:
-            for i in range(1,last_page):
-                try:
-                    if i > int(limit_page):
-                        break
-                    #將最後一頁取代成 i.html
-                    url = f"https://big5.quanben.io{urls_dict['path']}"\
-                        .replace(urls_dict['page'],str(i))
-                    executor.submit(main,url)
-                except:
-                    logger.error(traceback.format_exc())
-        return Response({"message":"create success"},status=201)
+        # last_page = int(urls_dict['page'])+1
+        # with threadExecutor as executor:
+        #     for i in range(1,last_page):
+        #         try:
+        #             if i > int(limit_page):
+        #                 break
+        #             #將最後一頁取代成 i.html
+        #             url = f"https://big5.quanben.io{urls_dict['path']}"\
+        #                 .replace(urls_dict['page'],str(i))
+        #             executor.submit(main,url)
+        #         except:
+        #             logger.error(traceback.format_exc())
+        # return Response({"message":"create success"},status=201)
 
     def delete(self,request):
         try:
