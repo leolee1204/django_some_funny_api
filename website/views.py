@@ -675,7 +675,7 @@ class downloadNovelWordCloud(views.APIView):
         user_agent = {"User-Agent":f"{ua.chrome}"}
         # https://big5.quanben.io/n/wudongqiankun/list.html
         url = request.data.get('url')
-        limit_page = request.data.get('limitPage') if request.data.get('limitPage') else 1
+        limit_page = int(request.data.get('limitPage')) if request.data.get('limitPage') else 1
 
         # style1 cpu太小改採此方式
         try:
